@@ -6,18 +6,25 @@ from safetensors.torch import save_file
 from safetensors import safe_open
 from pathlib import Path
 
-if (len(sys.argv) != 2):
-    print("Usage: python3 ./generate_data.py <N>")
+
+# MxK * KxN = MxN
+
+if (len(sys.argv) != 4):
+    print("Usage: python3 ./generate_data.py <M> <K> <N> (MxK * KxN = MxN)")
     sys.exit(1)
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
-DATA_DIR = SCRIPT_DIR.parent / "data"
+PROJECT_DIR = SCRIPT_DIR.parent
+DATA_DIR = PROJECT_DIR / "data"
 DATA_DIR.mkdir(exist_ok=True)
 GEN_DATA_FILE = DATA_DIR / "matmul_data.safetensors"
 RESULT_FILE = DATA_DIR / "output.safetensors"
 
 
-N = int(sys.argv[1])
+
+M = int(sys.argv[1])
+K = int(sys.argv[2])
+N = int(sys.argv[3])
 
 A = torch.randn(N,N)
 B = torch.randn(N,N)
@@ -32,7 +39,7 @@ save_file({
 
 import subprocess
 
-rust_bin = "../target/release/volgaray_gemm"
+rust_bin = str(PROJECT_DIR) + "/target/release/volgaray_gemm"
 env = os.environ.copy()
 env["RUST_LOG"]="info"
 
@@ -55,7 +62,11 @@ with safe_open(RESULT_FILE, framework="pt") as f:
 
 
 
-mse = torch.mean((gemm_result - C) ** 2)
+mse = torch.mean((gemm_result.double() - C.double()) ** 2)
 rmse = torch.sqrt(mse)
 
-print("RMSE:", rmse)
+print("GeMM Metal result:", gemm_result, sep="\n")
+
+print("Torch result:", C, sep="\n")
+
+print(f"RMSE: {rmse.item():.12f}")

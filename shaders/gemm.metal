@@ -22,5 +22,5 @@ kernel void gemm_tensor_kernel(
     for(uint i = 0; i < sizes.k; ++i) {
         sum += A[gid.y * sizes.k + i] * B[sizes.n * i + gid.x];
     }
-    C[gid.y * 10 + gid.x] = sum;
+    C[gid.y * sizes.n + gid.x] = sum;
 }
