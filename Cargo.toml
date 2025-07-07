@@ -1,0 +1,14 @@
+[package]
+name = "volgaray_gemm"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.98"
+clap = { version = "4.5.40", features = ["cargo"] }
+env_logger = "0.11.8"
+log = "0.4.27"
+objc2 = "0.6.1"
+objc2-foundation = "0.3.1"
+objc2-metal = "0.3.1"
+safetensors = "0.6.0"
