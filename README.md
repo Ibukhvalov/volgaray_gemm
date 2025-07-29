@@ -9,6 +9,7 @@ python3 ./scripts/generate_and_run.py <M> <N> <K>
 
 
 ## Benchmarks
-| Kernel    | Computation time (1024x2048 @ 2048x1024) |
-| --------- | ---------------------------------------- |
-| Naive     |     21ms                                 |
+| Kernel       | Computation time (4096) |
+| ------------ | ---------------------------------------- |
+| Naive        |     950ms                                |
+| Block tiling |     280ms                                |
