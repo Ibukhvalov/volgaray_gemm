@@ -1,4 +1,4 @@
-use std::{fmt::Display};
+use std::fmt::Display;
 
 #[derive(Debug)]
 pub struct Matrix<T> {
@@ -7,7 +7,6 @@ pub struct Matrix<T> {
 }
 
 impl<T: Display> Matrix<T> {
-
     #[warn(dead_code)]
     pub fn data_size(&self) -> usize {
         self.size.0 * self.size.1 * size_of::<T>()
@@ -17,7 +16,7 @@ impl<T: Display> Matrix<T> {
     pub fn print(&self) {
         for i in 0..self.size.0 {
             for j in 0..self.size.1 {
-                print!{"{} ", self.data[i*self.size.1 + j]};
+                print! {"{} ", self.data[i*self.size.1 + j]};
             }
             println!();
         }
@@ -34,10 +33,10 @@ impl Matrix<f32> {
         assert!(bytes.len() % unit_size == 0);
 
         let elements_nb = bytes.len() / unit_size;
-        
+
         assert_eq!(elements_nb, new_matrix_size.0 * new_matrix_size.1);
 
-        let mut mat = Self { 
+        let mut mat = Self {
             data: Vec::with_capacity(elements_nb),
             size: new_matrix_size,
         };

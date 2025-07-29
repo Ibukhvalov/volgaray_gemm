@@ -1,38 +1,42 @@
 mod matrix;
 mod metal_context;
 
-use std::{path::PathBuf, fs::read};
-use clap::{Arg, value_parser, command};
-use safetensors::{tensor::TensorView, Dtype, SafeTensors};
+use clap::{Arg, command, value_parser};
+use log::info;
 use matrix::Matrix;
 use metal_context::GeMMMetalContext;
-use log::info;
+use safetensors::{Dtype, SafeTensors, tensor::TensorView};
+use std::{fs::read, path::PathBuf};
+
+use std::time::Instant;
 
 fn main() -> anyhow::Result<()> {
     env_logger::init();
-
     let matches_result = command!()
         .arg(
             Arg::new("input_tensors_path")
-            .long("input")
-            .short('i')
-            .value_parser(value_parser!(PathBuf))
-            .help("Input tensor path relative to src directory")
-            .required(true)
+                .long("input")
+                .short('i')
+                .value_parser(value_parser!(PathBuf))
+                .help("Input tensor path relative to src directory")
+                .required(true),
         )
         .arg(
             Arg::new("output_tensor_path")
-            .long("output")
-            .short('o')
-            .value_parser(value_parser!(PathBuf))
-            .help("Ouput path to write resulted tensor")
-            .required(true)
+                .long("output")
+                .short('o')
+                .value_parser(value_parser!(PathBuf))
+                .help("Ouput path to write resulted tensor")
+                .required(true),
         )
         .get_matches();
 
-    let input_path = matches_result.get_one::<PathBuf>("input_tensors_path").unwrap();
-    let output_path = matches_result.get_one::<PathBuf>("output_tensor_path").unwrap();
-
+    let input_path = matches_result
+        .get_one::<PathBuf>("input_tensors_path")
+        .unwrap();
+    let output_path = matches_result
+        .get_one::<PathBuf>("output_tensor_path")
+        .unwrap();
 
     info!("Reading tensors from file");
     let data = read(input_path)?;
@@ -47,29 +51,29 @@ fn main() -> anyhow::Result<()> {
 
     info!("Initialization metal context");
     let mut gemm_core = GeMMMetalContext::gemm_init();
-    
+
     info!("Binding data");
     gemm_core.bind_data(&mut a, &mut b);
 
     info!("Computing");
+    let start = Instant::now();
     let result_data = unsafe { gemm_core.compute() };
+    let duration = start.elapsed();
+    println!("{} took {:?}", "Computation", duration);
 
     let result_shape = vec![a.size.0, b.size.1];
     let result_data = unsafe {
         std::slice::from_raw_parts(
             result_data.as_ptr() as *const u8,
-            result_shape.iter().product::<usize>() * std::mem::size_of::<f32>())
+            result_shape.iter().product::<usize>() * std::mem::size_of::<f32>(),
+        )
     };
-    let tensor_view = TensorView::new(
-        Dtype::F32,
-        result_shape,
-        result_data
-    )?;
+    let tensor_view = TensorView::new(Dtype::F32, result_shape, result_data)?;
 
     safetensors::serialize_to_file(
         [("C".to_string(), tensor_view)].into_iter(),
-         None,
-         &output_path,
+        None,
+        &output_path,
     )?;
 
     Ok(())
